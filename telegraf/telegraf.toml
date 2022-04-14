@@ -1,0 +1,152 @@
+# Copyright 2022 Shantanoo "Shan" Desai <shantanoo.desai@gmail.com>
+
+#    Licensed under the Apache License, Version 2.0 (the "License");
+#    you may not use this file except in compliance with the License.
+#    You may obtain a copy of the License at
+
+#        http://www.apache.org/licenses/LICENSE-2.0
+
+#    Unless required by applicable law or agreed to in writing, software
+#    distributed under the License is distributed on an "AS IS" BASIS,
+#    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+#    See the License for the specific language governing permissions and
+#    limitations under the License.
+
+[agent]
+    interval = "20s"
+    round_interval = true
+    metric_batch_size = 1000
+    metric_buffer_limit = 10000
+    collection_jitter = "0s"
+    flush_interval = "10s"
+    flush_jitter = "0s"
+    precision = ""
+    debug = true
+    quiet = false
+    hostname = ""
+    omit_hostname = true
+
+#############################################################
+#                   OUTPUT PLUGINS                          #
+#############################################################
+
+[[outputs.mqtt]]
+  ## MQTT Brokers
+  ## The list of brokers should only include the hostname or IP address and the
+  ## port to the broker. This should follow the format '{host}:{port}'. For
+  ## example, "localhost:1883" or "127.0.0.1:8883".
+  servers = ["mosquitto:1883"]
+
+  ## MQTT Topic for Producer Messages
+  ## MQTT outputs send metrics to this topic format:
+  ## <topic_prefix>/<hostname>/<pluginname>/ (e.g. prefix/web01.example.com/mem)
+  topic_prefix = "telegraf/opcua/mqtt"
+
+  ## QoS policy for messages
+  ## The mqtt QoS policy for sending messages.
+  ## See https://www.ibm.com/support/knowledgecenter/en/SSFKSJ_9.0.0/com.ibm.mq.dev.doc/q029090_.htm
+  ##   0 = at most once
+  ##   1 = at least once
+  ##   2 = exactly once
+  # qos = 2
+
+  ## Keep Alive
+  ## Defines the maximum length of time that the broker and client may not
+  ## communicate. Defaults to 0 which turns the feature off.
+  ##
+  ## For version v2.0.12 and later mosquitto there is a bug
+  ## (see https://github.com/eclipse/mosquitto/issues/2117), which requires
+  ## this to be non-zero. As a reference eclipse/paho.mqtt.golang defaults to 30.
+  keep_alive = 30
+
+  ## username and password to connect MQTT server.
+  # username = "telegraf"
+  # password = "metricsmetricsmetricsmetrics"
+
+  ## client ID
+  ## The unique client id to connect MQTT server. If this parameter is not set
+  ## then a random ID is generated.
+  # client_id = ""
+
+  ## Timeout for write operations. default: 5s
+  # timeout = "5s"
+
+  ## Optional TLS Config
+  # tls_ca = "/etc/telegraf/ca.pem"
+  # tls_cert = "/etc/telegraf/cert.pem"
+  # tls_key = "/etc/telegraf/key.pem"
+
+  ## Use TLS but skip chain & host verification
+  # insecure_skip_verify = false
+
+  ## When true, metrics will be sent in one MQTT message per flush. Otherwise,
+  ## metrics are written one metric per MQTT message.
+  # batch = false
+
+  ## When true, metric will have RETAIN flag set, making broker cache entries until someone
+  ## actually reads it
+  # retain = false
+
+  data_format = "influx"
+
+
+[[inputs.opcua]]
+  ## Metric name
+  name = "prosysOpcUA"
+  #
+  ## OPC UA Endpoint URL
+  endpoint = "${OPCUA_ENDPOINT_URL}"
+  #
+  ## Maximum time allowed to establish a connect to the endpoint.
+  connect_timeout = "10s"
+  #
+  ## Maximum time allowed for a request over the estabilished connection.
+  request_timeout = "5s"
+  #
+  ## Security policy, one of "None", "Basic128Rsa15", "Basic256",
+  ## "Basic256Sha256", or "auto"
+  security_policy = "None"
+  #
+  ## Security mode, one of "None", "Sign", "SignAndEncrypt", or "auto"
+  security_mode = "None"
+  #
+  ## Path to cert.pem. Required when security mode or policy isn't "None".
+  ## If cert path is not supplied, self-signed cert and key will be generated.
+  # certificate = "/etc/telegraf/cert.pem"
+  #
+  ## Path to private key.pem. Required when security mode or policy isn't "None".
+  ## If key path is not supplied, self-signed cert and key will be generated.
+  # private_key = "/etc/telegraf/key.pem"
+  #
+  ## Authentication Method, one of "Certificate", "UserName", or "Anonymous".  To
+  ## authenticate using a specific ID, select 'Certificate' or 'UserName'
+  auth_method = "Anonymous"
+  #
+  ## Username. Required for auth_method = "UserName"
+  # username = ""
+  #
+  ## Password. Required for auth_method = "UserName"
+  # password = ""
+  #
+  ## Option to select the metric timestamp to use. Valid options are:
+  ##     "gather" -- uses the time of receiving the data in telegraf
+  ##     "server" -- uses the timestamp provided by the server
+  ##     "source" -- uses the timestamp provided by the source
+  timestamp = "gather"
+  #
+  ## Node ID configuration
+  ## name              - field name to use in the output
+  ## namespace         - OPC UA namespace of the node (integer value 0 thru 3)
+  ## identifier_type   - OPC UA ID type (s=string, i=numeric, g=guid, b=opaque)
+  ## identifier        - OPC UA ID (tag as shown in opcua browser)
+  ## tags              - extra tags to be added to the output metric (optional)
+  ## Example:
+  ## {name="ProductUri", namespace="0", identifier_type="i", identifier="2262", tags=[["tag1","value1"],["tag2","value2]]}
+  nodes = [
+   {name="Counter", namespace="3", identifier_type="i", identifier="1001"},
+   {name="Random", namespace="3", identifier_type="i", identifier="1002"},
+   {name="Sawtooth", namespace="3", identifier_type="i", identifier="1003"},
+   {name="Sinusoid", namespace="3", identifier_type="i", identifier="1004"},
+   {name="Square", namespace="3", identifier_type="i", identifier="1005"},
+   {name="Triangle", namespace="3", identifier_type="i", identifier="1006"},
+  ]
